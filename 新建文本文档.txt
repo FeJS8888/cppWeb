@@ -1,0 +1,249 @@
+历史聊天记录
+
+
+
+ChatGPT
+ChatGPT
+GPT Icon
+Write For Me
+GPT Icon
+Photo Realistic Image GPT
+
+再显示 1 个
+
+探索 GPT
+今天
+前 7 天
+阳光运动板报设计
+阳光运动板报设计
+十一月
+十月
+润色文章请求
+九月
+文明学生个人事迹
+秋季运动会入场词
+升级套餐
+对最佳模型的更多访问权限
+
+ChatGPT
+
+共享
+
+User
+您说：
+TCP和UDP的C++实例代码
+ChatGPT 说：
+ChatGPT
+以下是简单的TCP和UDP服务器和客户端的C++实现代码示例，使用的是 POSIX 套接字 API。在 Linux 或 macOS 上编译和运行以下代码，需使用 g++ 或类似编译器，并链接 -pthread。
+
+TCP 示例
+TCP 服务器
+#include <iostream>
+#include <cstring>
+#include <unistd.h>
+#include <netinet/in.h>
+
+#define PORT 8080
+
+int main() {
+    int server_fd, new_socket;
+    struct sockaddr_in address;
+    int opt = 1;
+    int addrlen = sizeof(address);
+    char buffer[1024] = {0};
+
+    // 创建 socket 文件描述符
+    if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+        perror("Socket failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // 设置端口复用
+    if (setsockopt(server_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+        perror("setsockopt");
+        exit(EXIT_FAILURE);
+    }
+
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(PORT);
+
+    // 绑定 socket 到指定端口
+    if (bind(server_fd, (struct sockaddr *)&address, sizeof(address)) < 0) {
+        perror("Bind failed");
+        exit(EXIT_FAILURE);
+    }
+
+    // 监听
+    if (listen(server_fd, 3) < 0) {
+        perror("Listen");
+        exit(EXIT_FAILURE);
+    }
+
+    std::cout << "Server is listening on port " << PORT << std::endl;
+
+    // 接受客户端连接
+    if ((new_socket = accept(server_fd, (struct sockaddr *)&address, (socklen_t*)&addrlen)) < 0) {
+        perror("Accept");
+        exit(EXIT_FAILURE);
+    }
+
+    // 接收消息并回应
+    read(new_socket, buffer, 1024);
+    std::cout << "Message received: " << buffer << std::endl;
+    send(new_socket, "Hello from server", strlen("Hello from server"), 0);
+
+    close(new_socket);
+    close(server_fd);
+    return 0;
+}
+TCP 客户端
+#include <iostream>
+#include <cstring>
+#include <unistd.h>
+#include <arpa/inet.h>
+
+#define PORT 8080
+
+int main() {
+    int sock = 0;
+    struct sockaddr_in serv_addr;
+    char buffer[1024] = {0};
+
+    // 创建 socket
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        std::cerr << "Socket creation error" << std::endl;
+        return -1;
+    }
+
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(PORT);
+
+    // 转换 IP 地址
+    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
+        std::cerr << "Invalid address/Address not supported" << std::endl;
+        return -1;
+    }
+
+    // 连接到服务器
+    if (connect(sock, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0) {
+        std::cerr << "Connection failed" << std::endl;
+        return -1;
+    }
+
+    send(sock, "Hello from client", strlen("Hello from client"), 0);
+    std::cout << "Message sent to server" << std::endl;
+    read(sock, buffer, 1024);
+    std::cout << "Message from server: " << buffer << std::endl;
+
+    close(sock);
+    return 0;
+}
+UDP 示例
+UDP 服务器
+#include <iostream>
+#include <cstring>
+#include <unistd.h>
+#include <arpa/inet.h>
+
+#define PORT 8080
+
+int main() {
+    int sockfd;
+    char buffer[1024];
+    struct sockaddr_in servaddr, cliaddr;
+
+    // 创建 socket
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+        perror("Socket creation failed");
+        exit(EXIT_FAILURE);
+    }
+
+    memset(&servaddr, 0, sizeof(servaddr));
+    memset(&cliaddr, 0, sizeof(cliaddr));
+
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_addr.s_addr = INADDR_ANY;
+    servaddr.sin_port = htons(PORT);
+
+    // 绑定 socket
+    if (bind(sockfd, (const struct sockaddr *)&servaddr, sizeof(servaddr)) < 0) {
+        perror("Bind failed");
+        exit(EXIT_FAILURE);
+    }
+
+    std::cout << "UDP server is running on port " << PORT << std::endl;
+
+    socklen_t len = sizeof(cliaddr);
+    int n = recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)&cliaddr, &len);
+    buffer[n] = '\0';
+
+    std::cout << "Client message: " << buffer << std::endl;
+    sendto(sockfd, "Hello from server", strlen("Hello from server"), 0, (const struct sockaddr *)&cliaddr, len);
+
+    close(sockfd);
+    return 0;
+}
+UDP 客户端
+#include <iostream>
+#include <cstring>
+#include <unistd.h>
+#include <arpa/inet.h>
+
+#define PORT 8080
+
+int main() {
+    int sockfd;
+    char buffer[1024];
+    struct sockaddr_in servaddr;
+
+    // 创建 socket
+    if ((sockfd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+        perror("Socket creation failed");
+        exit(EXIT_FAILURE);
+    }
+
+    memset(&servaddr, 0, sizeof(servaddr));
+
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(PORT);
+    servaddr.sin_addr.s_addr = INADDR_ANY;
+
+    socklen_t len = sizeof(servaddr);
+    sendto(sockfd, "Hello from client", strlen("Hello from client"), 0, (const struct sockaddr *)&servaddr, len);
+    std::cout << "Message sent to server" << std::endl;
+
+    int n = recvfrom(sockfd, buffer, sizeof(buffer), 0, (struct sockaddr *)&servaddr, &len);
+    buffer[n] = '\0';
+    std::cout << "Message from server: " << buffer << std::endl;
+
+    close(sockfd);
+    return 0;
+}
+编译和运行
+编译：
+
+g++ tcp_server.cpp -o tcp_server -pthread
+g++ tcp_client.cpp -o tcp_client -pthread
+g++ udp_server.cpp -o udp_server -pthread
+g++ udp_client.cpp -o udp_client -pthread
+运行：
+
+启动 TCP 或 UDP 服务器：
+./tcp_server
+启动 TCP 或 UDP 客户端：
+./tcp_client
+这两个示例分别展示了 TCP 和 UDP 的基本通信方式，适合初学者理解网络编程基础。如果需要更多复杂功能，比如异步通信，可以考虑使用 Boost.Asio 或其他高层网络库。
+
+
+
+
+
+
+
+
+
+
+
+ChatGPT 也可能会犯错。请核查重要信息。
+?
